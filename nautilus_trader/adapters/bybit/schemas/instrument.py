@@ -70,6 +70,9 @@ class BybitInstrumentSpot(msgspec.Struct):
         max_quantity = Quantity.from_str(self.lotSizeFilter.maxOrderQty)
         min_quantity = Quantity.from_str(self.lotSizeFilter.minOrderQty)
 
+        maker_fee = Decimal(fee_rate.makerFeeRate) + Decimal(0.25 / 1e4)  # NOTE add LTP fees
+        taker_fee = Decimal(fee_rate.takerFeeRate) + Decimal(0.5 / 1e4)  # NOTE add LTP fees
+
         return CurrencyPair(
             instrument_id=instrument_id,
             raw_symbol=Symbol(bybit_symbol.raw_symbol),
@@ -81,8 +84,8 @@ class BybitInstrumentSpot(msgspec.Struct):
             size_increment=size_increment,
             margin_init=Decimal("0.1"),
             margin_maint=Decimal("0.1"),
-            maker_fee=Decimal(fee_rate.makerFeeRate),
-            taker_fee=Decimal(fee_rate.takerFeeRate),
+            maker_fee=round(maker_fee, 6),
+            taker_fee=round(taker_fee, 6),
             ts_event=ts_event,
             ts_init=ts_init,
             lot_size=lot_size,
@@ -142,8 +145,9 @@ class BybitInstrumentLinear(msgspec.Struct):
         min_quantity = Quantity.from_str(self.lotSizeFilter.minOrderQty)
         max_price = Price.from_str(self.priceFilter.maxPrice)
         min_price = Price.from_str(self.priceFilter.minPrice)
-        maker_fee = fee_rate.makerFeeRate
-        taker_fee = fee_rate.takerFeeRate
+
+        maker_fee = Decimal(fee_rate.makerFeeRate) + Decimal(0.25 / 1e4)  # NOTE add LTP fees
+        taker_fee = Decimal(fee_rate.takerFeeRate) + Decimal(0.5 / 1e4)  # NOTE add LTP fees
 
         if self.contractType == BybitContractType.LINEAR_PERPETUAL:
             instrument = CryptoPerpetual(
@@ -165,8 +169,8 @@ class BybitInstrumentLinear(msgspec.Struct):
                 min_price=min_price,
                 margin_init=Decimal("0.1"),
                 margin_maint=Decimal("0.1"),
-                maker_fee=Decimal(maker_fee),
-                taker_fee=Decimal(taker_fee),
+                maker_fee=round(maker_fee, 6),
+                taker_fee=round(taker_fee, 6),
                 ts_event=ts_event,
                 ts_init=ts_init,
                 info=msgspec.json.Decoder().decode(msgspec.json.Encoder().encode(self)),
@@ -193,8 +197,8 @@ class BybitInstrumentLinear(msgspec.Struct):
                 min_price=min_price,
                 margin_init=Decimal("0.1"),
                 margin_maint=Decimal("0.1"),
-                maker_fee=Decimal(maker_fee),
-                taker_fee=Decimal(taker_fee),
+                maker_fee=round(maker_fee, 6),
+                taker_fee=round(taker_fee, 6),
                 ts_event=ts_event,
                 ts_init=ts_init,
                 info=msgspec.json.Decoder().decode(msgspec.json.Encoder().encode(self)),
@@ -247,8 +251,9 @@ class BybitInstrumentInverse(msgspec.Struct):
         min_quantity = Quantity.from_str(self.lotSizeFilter.minOrderQty)
         max_price = Price.from_str(self.priceFilter.maxPrice)
         min_price = Price.from_str(self.priceFilter.minPrice)
-        maker_fee = fee_rate.makerFeeRate
-        taker_fee = fee_rate.takerFeeRate
+
+        maker_fee = Decimal(fee_rate.makerFeeRate) + Decimal(0.25 / 1e4)  # NOTE add LTP fees
+        taker_fee = Decimal(fee_rate.takerFeeRate) + Decimal(0.5 / 1e4)  # NOTE add LTP fees
 
         if self.contractType == BybitContractType.INVERSE_PERPETUAL:
             instrument = CryptoPerpetual(
@@ -270,8 +275,8 @@ class BybitInstrumentInverse(msgspec.Struct):
                 min_price=min_price,
                 margin_init=Decimal("0.1"),
                 margin_maint=Decimal("0.1"),
-                maker_fee=Decimal(maker_fee),
-                taker_fee=Decimal(taker_fee),
+                maker_fee=round(maker_fee, 6),
+                taker_fee=round(taker_fee, 6),
                 ts_event=ts_event,
                 ts_init=ts_init,
                 info=msgspec.json.Decoder().decode(msgspec.json.Encoder().encode(self)),
@@ -298,8 +303,8 @@ class BybitInstrumentInverse(msgspec.Struct):
                 min_price=min_price,
                 margin_init=Decimal("0.1"),
                 margin_maint=Decimal("0.1"),
-                maker_fee=Decimal(maker_fee),
-                taker_fee=Decimal(taker_fee),
+                maker_fee=round(maker_fee, 6),
+                taker_fee=round(taker_fee, 6),
                 ts_event=ts_event,
                 ts_init=ts_init,
                 info=msgspec.json.Decoder().decode(msgspec.json.Encoder().encode(self)),

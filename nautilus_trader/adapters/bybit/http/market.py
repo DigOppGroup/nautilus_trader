@@ -16,10 +16,20 @@
 from nautilus_trader.adapters.bybit.common.enums import BybitKlineInterval
 from nautilus_trader.adapters.bybit.common.enums import BybitProductType
 from nautilus_trader.adapters.bybit.common.symbol import BybitSymbol
+from nautilus_trader.adapters.bybit.endpoints.market.funding_history import (
+    BybitFundingHistoryEndpoint,
+)
+from nautilus_trader.adapters.bybit.endpoints.market.funding_history import (
+    BybitFundingHistoryGetParams,
+)
 
 # fmt: off
-from nautilus_trader.adapters.bybit.endpoints.market.instruments_info import BybitInstrumentsInfoEndpoint
-from nautilus_trader.adapters.bybit.endpoints.market.instruments_info import BybitInstrumentsInfoGetParams
+from nautilus_trader.adapters.bybit.endpoints.market.instruments_info import (
+    BybitInstrumentsInfoEndpoint,
+)
+from nautilus_trader.adapters.bybit.endpoints.market.instruments_info import (
+    BybitInstrumentsInfoGetParams,
+)
 
 # fmt: on
 from nautilus_trader.adapters.bybit.endpoints.market.klines import BybitKlinesEndpoint
@@ -32,6 +42,7 @@ from nautilus_trader.adapters.bybit.endpoints.market.trades import BybitTradesGe
 from nautilus_trader.adapters.bybit.http.client import BybitHttpClient
 from nautilus_trader.adapters.bybit.schemas.instrument import BybitInstrument
 from nautilus_trader.adapters.bybit.schemas.instrument import BybitInstrumentList
+from nautilus_trader.adapters.bybit.schemas.market.funding_history import BybitFundingRateHistory
 from nautilus_trader.adapters.bybit.schemas.market.kline import BybitKline
 from nautilus_trader.adapters.bybit.schemas.market.server_time import BybitServerTime
 from nautilus_trader.adapters.bybit.schemas.market.ticker import BybitTickerList
@@ -60,9 +71,29 @@ class BybitMarketHttpAPI:
         self._endpoint_klines = BybitKlinesEndpoint(client, self.base_endpoint)
         self._endpoint_tickers = BybitTickersEndpoint(client, self.base_endpoint)
         self._endpoint_trades = BybitTradesEndpoint(client, self.base_endpoint)
+        self._endpoint_funding_history = BybitFundingHistoryEndpoint(client, self.base_endpoint)
 
     def _get_url(self, url: str) -> str:
         return self.base_endpoint + url
+
+    async def fetch_funding_history(
+        self,
+        category: BybitProductType,
+        symbol: str,
+        startTime: int | None = None,
+        endTime: int | None = None,
+        limit: int | None = None,
+    ) -> list[BybitFundingRateHistory]:
+        response = await self._endpoint_funding_history.get(
+            BybitFundingHistoryGetParams(
+                category=category,
+                symbol=symbol,
+                startTime=startTime,
+                endTime=endTime,
+                limit=limit,
+            ),
+        )
+        return response.result.list
 
     async def fetch_tickers(
         self,

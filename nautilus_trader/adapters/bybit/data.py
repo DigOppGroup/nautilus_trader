@@ -52,6 +52,7 @@ from nautilus_trader.core.datetime import secs_to_millis
 from nautilus_trader.core.message import Request
 from nautilus_trader.core.nautilus_pyo3 import Symbol
 from nautilus_trader.core.uuid import UUID4
+from nautilus_trader.custom_data.funding_rate import FundingRateData
 from nautilus_trader.data.messages import DataResponse
 from nautilus_trader.live.data_client import LiveMarketDataClient
 from nautilus_trader.model.data import Bar
@@ -380,6 +381,9 @@ class BybitDataClient(LiveMarketDataClient):
         if data_type.type == BybitTickerData:
             symbol = data_type.metadata["symbol"]
             await self._handle_ticker_data_request(symbol, correlation_id)
+        if data_type.type == FundingRateData:
+            instrument_id = data_type.metadata["instrument_id"]
+            await self._handle_funding_rate_data_request(instrument_id, correlation_id)
 
     async def _request_instrument(
         self,
@@ -719,3 +723,35 @@ class BybitDataClient(LiveMarketDataClient):
                 self._handle_data(bar)
         except Exception as e:
             self._log.error(f"Failed to parse bar: {msg} with error {e}")
+
+    async def _handle_funding_rate_data_request(
+        self, instrument_id: InstrumentId, correlation_id: UUID4
+    ) -> None:
+        bybit_symbol = BybitSymbol(instrument_id.symbol.value)
+        ts_init = self._clock.timestamp_ns()
+        funding_history = await self._http_market.fetch_funding_history(
+            category=bybit_symbol.product_type,
+            symbol=bybit_symbol.raw_symbol,
+        )
+        result: list[FundingRateData] = []
+        for data in funding_history:
+            funding_rate_data: FundingRateData = FundingRateData(
+                instrument_id=instrument_id,
+                funding_rate=data.fundingRate,
+                funding_time=data.fundingRateTimestamp,
+                ts_event=millis_to_nanos(int(data.fundingRateTimestamp)),
+                ts_init=ts_init,
+            )
+            result.append(funding_rate_data)
+
+        result[-1].is_last = True
+
+        data_type = DataType(
+            type=FundingRateData,
+            metadata={"instrument_id": instrument_id},
+        )
+        self._handle_data_response(
+            data_type,
+            result,
+            correlation_id,
+        )
